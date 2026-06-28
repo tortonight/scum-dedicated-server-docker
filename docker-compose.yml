@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  scum-server:
+    image: tonight01gamer/scum-dedicated-server:latest
+    container_name: scum-dedicated-server
+    restart: unless-stopped
+    
+    ports:
+      # Game Port (UDP + TCP)
+      - "${GAMEPORT:-7777}:${GAMEPORT:-7777}/udp"
+      - "${GAMEPORT:-7777}:${GAMEPORT:-7777}/tcp"
+      # Game Port + 1 (UDP)
+      - "7778:7778/udp"
+      # Query Port (UDP)
+      - "${QUERYPORT:-27015}:${QUERYPORT:-27015}/udp"
+    
+    environment:
+      GAMEPORT: ${GAMEPORT:-7777}
+      QUERYPORT: ${QUERYPORT:-27015}
+      MAXPLAYERS: ${MAXPLAYERS:-64}
+      ADDITIONALFLAGS: ${ADDITIONALFLAGS:-}
+      MEMORY_THRESHOLD_PERCENT: ${MEMORY_THRESHOLD_PERCENT:-95}
+      MEMORY_CHECK_INTERVAL: ${MEMORY_CHECK_INTERVAL:-60}
+      GAME_UPDATE: ${GAME_UPDATE:-false}
+      RESTART_SCHEDULE: ${RESTART_SCHEDULE:-4,10,16,22}
+    
+    volumes:
+      - /srv/games/scum/game:/scum
+      - /srv/games/scum/saves:/scum_saved
+      - /srv/games/scum/steam_data:/home/scum/.steam
+    
+    # Resource limits (optional)
+    mem_limit: 16g
+    cpus: '4'
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "SCUM.exe"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
